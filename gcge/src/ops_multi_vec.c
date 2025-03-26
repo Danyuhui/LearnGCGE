@@ -310,6 +310,7 @@ void DefaultMultiVecInnerProd(char nsdIP, void **x, void **y, int is_vec, int *s
                               double *inner_prod, int ldIP, struct OPS_ *ops) {
     // 在当前进程的本地数据上计算内积。这一步骤得到的是每个进程上的局部结果
     ops->MultiVecLocalInnerProd(nsdIP, x, y, is_vec, start, end, inner_prod, ldIP, ops);
+<<<<<<< HEAD
 
     // 0进程的取出来
     // PetscMPIInt size, rank;
@@ -332,6 +333,8 @@ void DefaultMultiVecInnerProd(char nsdIP, void **x, void **y, int is_vec, int *s
     //     }
     // }
 
+=======
+>>>>>>> 730ae39a7b0011c456e3a83b77a5312b424303d0
 #if OPS_USE_MPI
     /* 计算实际处理区域的维度 */
     int nrows = end[0] - start[0], ncols = end[1] - start[1];
