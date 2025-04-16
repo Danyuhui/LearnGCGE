@@ -12,6 +12,7 @@ if(NOT CMAKE_BUILD_TYPE)
     "MinSizeRel" "RelWithDebInfo")
 endif()
 
+
 if(UNIX)
     set(3RD_LIB_PATH ${PROJECT_SOURCE_DIR}/3rd/ubuntu)
 elseif(WIN32)

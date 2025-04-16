@@ -10,7 +10,9 @@
 #include <limits>
 #include <memory>
 #include <omp.h>
-
+#include <vector>
+#include <cmath>
+#include <algorithm>
 extern "C" {
 #include "app_ccs.h"
 #include "app_lapack.h"
@@ -115,6 +117,14 @@ int eigenSolverGCG(void* A, void* B, std::vector<double>& eigenvalue, std::vecto
                                  compW_bpcg_tol_type, 0, // without shift
                                  compRR_min_num, compRR_min_gap, compRR_tol, ops);
 
+    // 适配按范围求解特征值的数据
+    struct GCGSolver_* gcgsolver;
+    gcgsolver = (GCGSolver*)ops->eigen_solver_workspace;
+    gcgsolver->extract_type = (GCGSolver_::EigenValueExtractType)gcgeparam->extMethod.extractType;
+    gcgsolver->min_eigenvalue = std::pow(gcgeparam->extMethod.minFreq * 2 * M_PI, 2);
+    gcgsolver->max_eigenvalue = std::pow(gcgeparam->extMethod.maxFreq * 2 * M_PI, 2);
+    gcgsolver->compW_cg_shift = gcgsolver->min_eigenvalue;
+
     /* 命令行获取 GCG 的算法参数 勿用 有 BUG, 
 	 * 不应该改变 nevMax nevInit block_size, 这些与工作空间有关 */
     //EigenSolverSetParametersFromCommandLine_GCG(argc,argv,ops);
@@ -141,15 +151,23 @@ int eigenSolverGCG(void* A, void* B, std::vector<double>& eigenvalue, std::vecto
 
     // 开始导出数据
     eigenvalue.resize(nevConv);
+    std::sort(eigenvalue.begin(), eigenvalue.end());
     eigenvector.resize(nevConv);
     ops->Printf("eigenvectors\n");
+    int countInRange = 0;
     for (auto i = 0; i < nevConv; ++i) {
-        std::cout << "index: " << i + 1 << " eigenvalue: " << eigenvalue[i] << std::endl;
+        if (eval[i] >= gcgsolver->min_eigenvalue && eval[i] <= gcgsolver->max_eigenvalue) {
+            countInRange++;
+            ops->Printf("index: %d eigenvalue: %e\n", countInRange, eval[i]);
+        }
     }
     //ops->MultiVecView(evec,0,nevConv,ops);
 
+#ifdef USE_SLEPC
+    multiVecReturn((BV)(evec), eigenvalue.size(), eigenvector); // 需先进行类型转化
+#else
     multiVecReturn((LAPACKVEC*)(evec), eigenvalue.size(), eigenvector); // 需先进行类型转化
-
+#endif // USE_SLEPC
     ops->MultiVecDestroy(&(evec), nevMax, ops);
     return 0;
 }
@@ -177,3 +195,29 @@ void multiVecReturn(LAPACKVEC* x, int end, std::vector<std::vector<double>>& eig
     }
     return;
 }
+
+#ifdef USE_SLEPC
+void multiVecReturn(BV bv, int count, std::vector<std::vector<double>>& eigenvector) {
+    // std::cout << "multiVecReturn(BV, int, std::vector<std::vector<double>>)" << std::endl;
+    // PetscInt m, n;
+    // BVGetSizes(bv,&m, nullptr, &n); // 获取 BV 维度，其中 m 是行数, n是列数
+    // std::cout << "m = " << m << ", n = " << n << std::endl;
+    // count = PetscMin(count, n); // 防止超出 BV 实际列数
+    // eigenvector.resize(count, std::vector<double>(m)); // 为前 count 列分配空间
+
+    // for (int j = 0; j < count; ++j) {
+    //     Vec v;
+    //     const PetscScalar* array;
+
+    //     BVGetColumn(bv, j, &v);                // 获取 BV 的第 j 列（Vec）
+    //     VecGetArrayRead(v, &array);            // 访问 Vec 的数据
+
+    //     for (PetscInt i = 0; i < m; ++i) {
+    //         eigenvector[j][i] = array[i]; // 复制数据到 std::vector<double>
+    //     }
+
+    //     VecRestoreArrayRead(v, &array);        // 释放访问权限
+    //     BVRestoreColumn(bv, j, &v);            // 归还 Vec
+    // }
+}
+#endif // USE_SLEPC

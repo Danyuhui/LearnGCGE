@@ -114,6 +114,11 @@ static void MultiVecCreateByMat(BV *des_bv, int num_vec, Mat src_mat, struct OPS
     return;
 }
 
+// 测试包装函数，供单元测试调用
+void Testable_MultiVecCreateByMat(BV *des_bv, int num_vec, Mat src_mat, struct OPS_ *ops) {
+    MultiVecCreateByMat(des_bv, num_vec, src_mat, ops);
+}
+
 /**
  * @brief 析构多维向量
  * 
@@ -226,21 +231,21 @@ static void MultiVecLocalInnerProd(char nsdIP,
 static void MultiVecSetRandomValue(BV x, int start, int end, struct OPS_ *ops) {
     BVSetActiveColumns(x, start, end);
 
-    // // 调试时使用的固定随机种子方法 start
-    // PetscRandom rand;
-    // PetscRandomCreate(PETSC_COMM_WORLD, &rand);
-    // // 设置固定的随机种子（例如1234）
-    // PetscRandomSetSeed(rand, 1234);
-    // // 重新初始化随机数生成器
-    // PetscRandomSeed(rand);
-    // // 调试时使用的固定随机种子方法 end
+    // 调试时使用的固定随机种子方法 start
+    PetscRandom rand;
+    PetscRandomCreate(PETSC_COMM_WORLD, &rand);
+    // 设置固定的随机种子（例如1234）
+    PetscRandomSetSeed(rand, 1234);
+    // 重新初始化随机数生成器
+    PetscRandomSeed(rand);
+    // 调试时使用的固定随机种子方法 end
 
     // 假设 bv 已经创建
     BVSetRandom(x);
 
-    // // 调试时使用的固定随机种子方法 start
-    // PetscRandomDestroy(&rand);
-    // // 调试时使用的固定随机种子方法 end
+    // 调试时使用的固定随机种子方法 start
+    PetscRandomDestroy(&rand);
+    // 调试时使用的固定随机种子方法 end
     return;
 }
 
