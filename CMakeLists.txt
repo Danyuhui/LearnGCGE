@@ -12,6 +12,7 @@ if(NOT CMAKE_BUILD_TYPE)
     "MinSizeRel" "RelWithDebInfo")
 endif()
 
+add_definitions(-DUSE_SLEPC)
 
 if(UNIX)
     set(3RD_LIB_PATH ${PROJECT_SOURCE_DIR}/3rd/ubuntu)
@@ -34,3 +35,4 @@ include(SLEPcConfig)
 
 add_subdirectory(gcge)  # 添加 gcge 库的子目录
 add_subdirectory(src)   # 添加 src 可执行文件的子目录
+add_subdirectory(test) # 添加测试目录
